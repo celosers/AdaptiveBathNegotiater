@@ -1,0 +1,40 @@
+issues:
+- name: i1
+  type: CategoricalIssue
+  values:
+  - v1
+  - v2
+  - v3
+  - v4
+  - v5
+  - v6
+- name: i2
+  type: CategoricalIssue
+  values:
+  - v1
+  - v2
+  - v3
+  - v4
+  - v5
+- name: i3
+  type: CategoricalIssue
+  values:
+  - v1
+  - v2
+  - v3
+  - v4
+  - v5
+  - v6
+  - v7
+- name: i4
+  type: CategoricalIssue
+  values:
+  - v1
+  - v2
+  - v3
+  - v4
+  - v5
+  - v6
+name: ISBTAcquisition
+path: null
+type: DiscreteCartesianOutcomeSpace

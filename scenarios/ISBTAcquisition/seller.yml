@@ -1,0 +1,43 @@
+name: seller
+reserved_outcome: null
+reserved_value: 0.0
+stability: 2047
+type: LinearAdditiveUtilityFunction
+values:
+- mapping:
+    v1: 1.0
+    v2: 0.5915139697347847
+    v3: 0.0
+    v4: 0.25
+    v5: 0.8507830388471789
+    v6: 1.0
+  type: TableFun
+- mapping:
+    v1: 0.5998516184192272
+    v2: 0.5998516184192272
+    v3: 0.0
+    v4: 1.0
+    v5: 1.0
+  type: TableFun
+- mapping:
+    v1: 1.0
+    v2: 0.4245300254184927
+    v3: 1.0
+    v4: 0.0
+    v5: 0.4815861274722125
+    v6: 0.7337352477802579
+    v7: 0.19999999999999996
+  type: TableFun
+- mapping:
+    v1: 0.542334301642034
+    v2: 1.0
+    v3: 0.771167150821017
+    v4: 1.0
+    v5: 0.0
+    v6: 0.0
+  type: TableFun
+weights:
+- 0.10678783274810656
+- 0.012144393664773278
+- 0.5848710859180682
+- 0.2961966876690519

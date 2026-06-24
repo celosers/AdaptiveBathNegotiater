@@ -1,0 +1,35 @@
+issues:
+- name: i1
+  type: CategoricalIssue
+  values:
+  - v1
+  - v2
+  - v3
+  - v4
+  - v5
+  - v6
+  - v7
+- name: i2
+  type: CategoricalIssue
+  values:
+  - v1
+  - v2
+  - v3
+  - v4
+  - v5
+  - v6
+  - v7
+  - v8
+  - v9
+- name: i3
+  type: CategoricalIssue
+  values:
+  - v1
+  - v2
+  - v3
+  - v4
+  - v5
+  - v6
+name: Laptop
+path: null
+type: DiscreteCartesianOutcomeSpace
