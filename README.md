@@ -10,20 +10,20 @@ Built on [NegMAS](https://negmas.readthedocs.io/), ANL 2026.
 
 ```mermaid
 %%{init: {'theme': 'dark', 'themeVariables': {'fontSize': '16px'}}}%%
-flowchart LR
-    A["📥 Offer"] --> B["🧠 Model"]
-    B --> C["📐 Aspiration"]
-    C --> D["🔶 Jitter"]
-    D --> E["🎯 Candidates"]
-    E --> F["🔷 Novelty"]
-    F --> G["⭐ Best ω*"]
+flowchart TD
+    A["📥 Receive Offer"] --> B["🧠 Update Opponent Model"]
+    B --> C["📐 Compute Aspiration α(t)"]
+    C --> D["🔶 Target Jitter"]
+    D --> E["🎯 Generate Candidates"]
+    E --> F["🔷 Novelty Oscillation"]
+    F --> G["⭐ Select Best ω*"]
     G --> H{"🔴 Bluff?"}
-    H -->|"p_b"| I["🃏 Bluff ω_b"]
+    H -->|"p_b"| I["🃏 Replace with Bluff ω_b"]
     H -->|"1−p_b"| J["Keep ω*"]
-    I --> K{"Accept?"}
+    I --> K{"Accept Opponent?"}
     J --> K
-    K -->|"Yes"| L["✅ Deal"]
-    K -->|"No"| M["📤 Counter"]
+    K -->|"Yes"| L["✅ Agreement"]
+    K -->|"No"| M["📤 Send Counter-Offer"]
 
     style D fill:#b8860b,stroke:#ffd700,color:#fff
     style F fill:#1e90ff,stroke:#87ceeb,color:#fff
@@ -38,15 +38,17 @@ Three concealment stages intercept at distinct points in the bid-generation pipe
 
 ```mermaid
 %%{init: {'theme': 'dark'}}%%
-graph LR
+graph TB
     subgraph Agent["AdaptiveBathNegotiator"]
-        OM["Opponent Model"] --> TA["Trajectory<br/>Classifier"]
-        TA --> ASP["Concession<br/>Backbone"]
-        ASP --> JIT["Jitter"]
-        JIT --> NOV["Novelty"]
-        NOV --> BLF["Bluff"]
-        BLF --> GATE["Acceptance<br/>Gate"]
+        OM["Opponent Model<br/>SFM + DFM weighted"]
+        TA["Trajectory Classifier<br/>Hardliner · Conceder · Erratic"]
+        ASP["Concession Backbone<br/>α(t) monotonic descent"]
+        JIT["Target Jitter<br/>ε ~ U(−δ, +δ)"]
+        NOV["Novelty Oscillation<br/>λ_N ∈ {low, high}"]
+        BLF["Guarded Bluff<br/>p_b, bounded loss"]
+        GATE["Acceptance Gate<br/>u_A(ω_B) ≥ max(ω* − η, rv)"]
     end
+    OM --> TA --> ASP --> JIT --> NOV --> BLF --> GATE
     IN["Opponent Bids"] --> OM
     GATE --> OUT["Accept / Counter"]
 
