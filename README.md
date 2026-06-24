@@ -9,28 +9,28 @@ Built on [NegMAS](https://negmas.readthedocs.io/), ANL 2026.
 ## Bidding Pipeline
 
 ```mermaid
-%%{init: {'theme': 'dark'}}%%
+%%{init: {'theme': 'dark', 'themeVariables': {'fontSize': '16px'}}}%%
 flowchart LR
-    A[Offer] --> B[Model]
-    B --> C[Aspiration]
-    C --> D[🔶 Jitter]
-    D --> E[Candidates]
-    E --> F[🔷 Novelty]
-    F --> G[Best ω*]
-    G --> H{🔴 Bluff?}
-    H -->|Yes| I[Bluff ω_b]
-    H -->|No| J[Keep ω*]
-    I --> K{Accept?}
+    A["📥 Offer"] --> B["🧠 Model"]
+    B --> C["📐 Aspiration"]
+    C --> D["🔶 Jitter"]
+    D --> E["🎯 Candidates"]
+    E --> F["🔷 Novelty"]
+    F --> G["⭐ Best ω*"]
+    G --> H{"🔴 Bluff?"}
+    H -->|"p_b"| I["🃏 Bluff ω_b"]
+    H -->|"1−p_b"| J["Keep ω*"]
+    I --> K{"Accept?"}
     J --> K
-    K -->|Yes| L[✅ Deal]
-    K -->|No| M[📤 Bid]
+    K -->|"Yes"| L["✅ Deal"]
+    K -->|"No"| M["📤 Counter"]
 
     style D fill:#b8860b,stroke:#ffd700,color:#fff
     style F fill:#1e90ff,stroke:#87ceeb,color:#fff
     style H fill:#8b0000,stroke:#ff6b6b,color:#fff
 ```
 
-Three concealment stages (colored) intercept at distinct points: aspiration, candidate scoring, and final selection.
+Three concealment stages intercept at distinct points in the bid-generation pipeline.
 
 ---
 
@@ -38,15 +38,17 @@ Three concealment stages (colored) intercept at distinct points: aspiration, can
 
 ```mermaid
 %%{init: {'theme': 'dark'}}%%
-graph TB
-    O[Opponent Bids] --> OM[Opponent Model<br/>SFM + DFM weighted]
-    OM --> TA[Trajectory Classifier<br/>Hardliner · Conceder · Erratic]
-    TA --> ASP[Concession Backbone<br/>α(t) monotonic descent]
-    ASP --> JIT[Target Jitter<br/>ε ~ U(−δ, +δ)]
-    JIT --> NOV[Novelty Oscillation<br/>λ_N ∈ {low, high}]
-    NOV --> BLF[Guarded Bluff<br/>u_A ≥ θ·u_A(ω*)]
-    BLF --> GATE[Acceptance Gate<br/>u_A(ω_B) ≥ max(ω*−η, rv)]
-    GATE --> OUT[Accept / Counter]
+graph LR
+    subgraph Agent["AdaptiveBathNegotiator"]
+        OM["Opponent Model"] --> TA["Trajectory<br/>Classifier"]
+        TA --> ASP["Concession<br/>Backbone"]
+        ASP --> JIT["Jitter"]
+        JIT --> NOV["Novelty"]
+        NOV --> BLF["Bluff"]
+        BLF --> GATE["Acceptance<br/>Gate"]
+    end
+    IN["Opponent Bids"] --> OM
+    GATE --> OUT["Accept / Counter"]
 
     style OM fill:#4a148c,color:#fff
     style ASP fill:#e65100,color:#fff
@@ -56,13 +58,11 @@ graph TB
     style GATE fill:#1b5e20,color:#fff
 ```
 
-### Mechanisms
-
 | Stage | Mechanism | Formula |
 |:---|:---|:---|
 | Aspiration | Target Jitter | $\tilde{\alpha}(t) = \alpha(t)(1 + \epsilon_t),\ \epsilon_t \sim \mathcal{U}(-\delta,\delta)$ |
-| Candidate | Novelty Oscillation | $\lambda_N(r)$ alternates high (explore) / low (converge) per round |
-| Selection | Guarded Bluff | $p_b$ probability; $u_A(\omega_b) \geq \theta_b \cdot u_A(\omega^*)$ |
+| Candidate | Novelty Oscillation | $\lambda_N(r)$ alternates high (explore) / low (converge) |
+| Selection | Guarded Bluff | $u_A(\omega_b) \geq \theta_b \cdot u_A(\omega^*)$ with probability $p_b$ |
 
 ---
 
@@ -70,58 +70,47 @@ graph TB
 
 *8 domains × 5 opponents × 7,200 negotiations. Lower τ = better concealment.*
 
-### Privacy vs Utility
+### Ablation Study
 
-```
-Config      Utility              τ (Bayesian)
-──────      ────────────────────  ────────────
-OFF         0.548 ██████████████  0.566 ████████████▌
-Jitter      0.548 ██████████████  0.570 █████████████
-Novelty     0.544 █████████████▋  0.564 ████████████▎
-Bluff       0.523 ████████████▌   0.556 ████████████  ← best τ
-FULL        0.525 ████████████▋   0.560 ████████████▎
-Random      0.549 ██████████████  0.576 █████████████▌ ← worst τ
-```
-> FULL: τ −0.006 at **4.1%** utility cost. Random noise has the *highest* leakage.
+| Configuration | Utility | τ (Bayesian) ↓ | Exploit Loss | Verdict |
+|:---|---:|---:|---:|:---|
+| **OFF** (no concealment) | 0.548 | 0.566 | 0.037 | baseline |
+| Jitter only | 0.548 | 0.570 | 0.026 | safe, weak |
+| Novelty only | 0.544 | 0.564 | 0.031 | safe, weak |
+| **Bluff only** | 0.523 | **0.556** | 0.063 | best τ, risky |
+| **FULL** (all three) | 0.525 | 0.560 | 0.050 | balanced |
+| Random baseline | 0.549 | 0.576 | 0.032 | worst τ |
 
-### Layer Contribution
+> FULL reduces τ by 0.006 at **4.1% utility cost**. Random perturbation produces the *highest* leakage — worse than no concealment.
+
+### Layer Contribution (Bayesian Attacker)
 
 ```mermaid
 %%{init: {'theme': 'dark'}}%%
 pie showData
-    title τ Reduction (Bayesian Attacker)
+    title τ Reduction Breakdown
     "Bluff (175%)" : 56
     "Novelty (36%)" : 12
-    "Sub-additive (−31%)" : 10
+    "Sub-additive gap (−31%)" : 10
     "Jitter (−80%)" : 22
 ```
 
-Bluff dominates. Three layers are **sub-additive** — FULL < sum of individual effects.
+Bluff is dominant. Three layers are **sub-additive** — the combined effect is smaller than the sum of individual contributions.
 
-### Exploitation Loss
+### Exploitation Asymmetry
 
-```
-Config      Loss        vs OFF
-──────      ──────────  ──────
-OFF         0.037 ███▌   —
-Jitter      0.026 ██▌    −31%  safe
-Novelty     0.031 ███     −16%  safe
-Bluff       0.063 ██████  +69%  risky
-FULL        0.050 ████▊   +34%
-Random      0.032 ███     −15%
-```
-> Jitter/Novelty protect both privacy and exploitation. Bluff trades exploitation safety for τ concealment.
+Jitter and Novelty reduce exploitation loss (−31%, −16%). Bluff increases it by **+69%** while achieving the best τ concealment. Ranking concealment and exploitation resistance can move in opposite directions — a trade-off to consider when selecting concealment layers.
 
 ---
 
 ## Advantages
 
-- **Stage-specific > random noise** — undirected perturbation increases leakage
-- **No protocol changes** — works within standard alternating-offers
-- **Bounded bluffing** — every bluff bid stays above reservation value
-- **Adaptive concession** — opponent trajectory classification (Hardliner/Conceder/Erratic)
-- **Modular** — each layer independently toggleable
-- **Lightweight** — frequency-based models, no GPU needed
+- **Stage-specific concealment outperforms random noise** — undirected perturbation increases leakage
+- **No protocol changes needed** — operates within standard alternating-offers
+- **Bounded bluffing** — every bluff bid above reservation value, controlled loss margin
+- **Adaptive concession** — opponent trajectory classification: Hardliner / Conceder / Erratic
+- **Modular design** — each concealment layer independently toggleable
+- **Lightweight** — frequency-based opponent models, no GPU or neural training
 
 ---
 
@@ -140,7 +129,7 @@ adaptive_bath_agent.py   # Core agent (AdaptiveBathNegotiator)
 ceanl.py                 # ANL competition wrapper
 main.py                  # CLI entry point
 leakage_attackers.py     # CF / RF / Bayesian attacker models
-examples/                # Opponents: BOANeg, MAPNeg, SimpleNegotiator
+examples/                # Opponent implementations
 scenarios/               # 8 benchmark domains
 requirements.txt
 ```
